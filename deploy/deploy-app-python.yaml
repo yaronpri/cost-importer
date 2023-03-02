@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cost-importer
+  labels:
+    app: cost-importer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cost-importer
+  template:
+    metadata:
+      labels:
+        app: cost-importer
+    spec:
+      containers:
+      - name: cost-importer
+        image: yaronpr/azurecost-importer:latest
+        env:        
+        - name: EVENTHUB_CONSUMERGROUP
+          value: "$Default"
+        - name: EVENTHUB_NAME
+          value: "eventhub"
+        - name: EVENTHUB_CONNECTIONSTRING
+          valueFrom:
+            secretKeyRef:
+             name: secrets-cost-importer
+             key: eventhub-connectionstring
+        - name: BLOB_CHECKPOINT_CONTAINERNAME
+          value: checkpoints
+        - name: BLOB_CHECKPOINT_CONNECTIONSTRING
+          valueFrom:
+            secretKeyRef:
+              name: secrets-cost-importer
+              key: blob-checkpoint-connectionstring
+        - name: BLOB_STORE_CONTAINERNAME
+          value: report
+        - name: BLOB_STORE_CONNECTIONSTRING
+          valueFrom:
+            secretKeyRef:
+              name: secrets-cost-importer
+              key: blob-store-connectionstring
+        - name: LOG_ANALYTIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: secrets-cost-importer
+              key: log-analytic-key
+        - name: LOG_ANALYTIC_CUSTOMER_ID
+          valueFrom:
+            secretKeyRef:
+              name: secrets-cost-importer
+              key: log-analytic-customer-id
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secrets-cost-importer
+  labels:
+    app: cost-importer
+data:
+  eventhub-connectionstring: <BASE64 EVENTHUB NAMESPACE CONNECTION STRING>
+  blob-checkpoint-connectionstring: <BASE64 BLOB  CHECKPOINT CONNECTION STRING>
+  blob-store-connectionstring: <BASE64 BLOB COST REPORT CONNECTION STRING>
+  log-analytic-key: <BASE64 LOG ANALYTIC WORKSPACE  PRIMARY KEY>
+  log-analytic-customer-id: <BASE64 LOG ANALYTIC WORKSPACE ID>
